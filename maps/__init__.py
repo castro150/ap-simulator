@@ -1,1 +1,1 @@
-from .generator import MapGenerator
+from .generator import map_by_airplanes
