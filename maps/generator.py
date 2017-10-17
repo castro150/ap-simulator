@@ -53,13 +53,13 @@ def map_by_airplanes(map_file_name):
         popup = br_airport['iata']
         if br_airport['iata'] in routes_by_airport:
             if 'as_origin' in routes_by_airport[br_airport['iata']]:
-                popup = popup + '<br />Origin of:'
+                popup = popup + '<br />Origem de:'
                 for route in routes_by_airport[br_airport['iata']]['as_origin']:
                     popup = popup + '<br />' + route['airplane']
                     popup = popup + ' - ' + route['departure_time'].strftime('%4Y-%m-%d %H:%M:%S')
 
             if 'as_destine' in routes_by_airport[br_airport['iata']]:
-                popup = popup + '<br />Destine of:'
+                popup = popup + '<br />Destino de:'
                 for route in routes_by_airport[br_airport['iata']]['as_destine']:
                     popup = popup + '<br />' + route['airplane']
 
