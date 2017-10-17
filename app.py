@@ -1,4 +1,13 @@
+import flask
+
 import maps
+
+app = flask.Flask(__name__)
+
+
+@app.route('/map')
+def home_endpoint():
+    return flask.send_file('Map1.html')
 
 
 def main():
@@ -6,3 +15,6 @@ def main():
 
 
 main()
+
+if __name__ == '__main__':
+    app.run(debug=True)

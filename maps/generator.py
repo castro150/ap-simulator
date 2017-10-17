@@ -46,7 +46,7 @@ def map_by_airplanes(map_file_name):
     routes_by_airplane = _group_by_airplane(routes)
     routes_by_airport = _group_by_airport(routes)
 
-    airplane_vision_map = folium.Map(location=[-20.5934, -46.9408], zoom_start=7, min_zoom=7, tiles='Mapbox Bright')
+    airplane_vision_map = folium.Map(location=[-20.1234, -45.9408], zoom_start=7, min_zoom=7, tiles='Mapbox Bright')
     fg_airports = folium.FeatureGroup(name='Brazilian airports')
 
     for br_airport in br_airports_se:
