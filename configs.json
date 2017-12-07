@@ -1,0 +1,13 @@
+{
+  "price_per_l": 2.5,
+  "failure_treatment": [
+    ["CNF", "GIG"],
+    ["CGH", "CNF"],
+    ["GIG", "BEL"]
+  ],
+  "failure_time_to_fix": [
+    720,
+    168,
+    4
+  ]
+}

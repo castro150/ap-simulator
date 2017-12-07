@@ -1,16 +1,13 @@
 from collections import defaultdict
+import copy
 import folium
 import flightradar24
 import optimizer
 
 fr = flightradar24.Api()
-DESIRED_IATA = ['VIX', 'CDI', 'GUZ', 'SBJ', 'QAK', 'POJ', 'CNF', 'DIQ', 'GVR', 'JDF', 'MOC', 'PLU', 'POO', 'JDR', 'UDI',
-                'UBA', 'IZA', 'SNZ', 'CAW', 'CFB', 'GIG', 'ITP', 'MEA', 'QRZ', 'SDU', 'ARU', 'AQA', 'AIF', 'QVP', 'BAT',
-                'JTC', 'QCP', 'BJP', 'CPQ', 'CGH', 'QDC', 'GUJ', 'GRU', 'FRC', 'QDV', 'QGC', 'LIP', 'MII', 'OUS', 'QHB',
-                'PPB', 'RAO', 'QSC', 'SJP', 'SJK', 'SOD', 'UBT', 'VCP', 'VOT']
 
 airports = fr.get_airports()['rows']
-br_airports_se = list(filter(lambda airport: airport['iata'] in DESIRED_IATA, airports))
+br_airports_se = list(filter(lambda airport: airport['country'] == 'Brazil', airports))
 
 
 def _generate_color(index):
@@ -40,13 +37,20 @@ def _group_by_airport(routes):
     return routes_by_airport
 
 
-def map_by_airplanes(map_file_name):
-    routes = optimizer.optimize(br_airports_se)
+def map_by_airplanes(optimization_data, map_file_name):
+    routes_bkp = copy.deepcopy(optimization_data['rotas'])
+    airplanes_bkp = copy.deepcopy(optimization_data['aeronaves'])
+    fix_cost, fix_routes = optimizer.treat_failures(optimization_data['aeronaves'], br_airports_se)
+    cost = 0
+    routes = []
+    if len(optimization_data['aeronaves']) > 0:
+        cost, routes = optimizer.optimize(optimization_data, br_airports_se)
+    routes.extend(fix_routes)
 
     routes_by_airplane = _group_by_airplane(routes)
     routes_by_airport = _group_by_airport(routes)
 
-    airplane_vision_map = folium.Map(location=[-20.1234, -45.9408], zoom_start=7, min_zoom=7, tiles='Mapbox Bright')
+    airplane_vision_map = folium.Map(location=[-20.1234, -45.9408], zoom_start=5, min_zoom=4, tiles='Mapbox Bright')
     fg_airports = folium.FeatureGroup(name='Brazilian airports')
 
     for br_airport in br_airports_se:
@@ -63,7 +67,7 @@ def map_by_airplanes(map_file_name):
                 for route in routes_by_airport[br_airport['iata']]['as_destine']:
                     popup = popup + '<br />' + route['airplane']
 
-        fg_airports.add_child(folium.CircleMarker(location=[br_airport['lat'], br_airport['lon']], radius=6,
+        fg_airports.add_child(folium.CircleMarker(location=[float(br_airport['lat']), float(br_airport['lon'])], radius=6,
                                                   popup=popup, fill_color='green', color='grey',
                                                   fill=True, fill_opacity=0.7))
     airplane_vision_map.add_child(fg_airports)
@@ -74,8 +78,8 @@ def map_by_airplanes(map_file_name):
         fg = folium.FeatureGroup(name=airplane)
 
         for route in routes:
-            points = [(route['origin']['lat'], route['origin']['lon']),
-                      (route['destine']['lat'], route['destine']['lon'])]
+            points = [(float(route['origin']['lat']), float(route['origin']['lon'])),
+                      (float(route['destine']['lat']), float(route['destine']['lon']))]
             popup = route['airplane'] + ' - ' + route['departure_time'].strftime('%4Y-%m-%d %H:%M:%S')
             fg.add_child(folium.PolyLine(locations=points, popup=popup, color=route_color))
 
@@ -83,3 +87,8 @@ def map_by_airplanes(map_file_name):
 
     airplane_vision_map.add_child(folium.LayerControl())
     airplane_vision_map.save(map_file_name)
+
+    optimization_data['rotas'] = routes_bkp
+    optimization_data['aeronaves'] = airplanes_bkp
+
+    return fix_cost + cost, routes
